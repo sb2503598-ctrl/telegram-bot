@@ -2,18 +2,19 @@ import asyncio
 import logging
 import os
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 
 logging.basicConfig(level=logging.INFO)
 
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
-PHONE = os.environ.get("PHONE")
+SESSION = os.environ.get("SESSION")
 OWNER_ID = int(os.environ.get("OWNER_ID"))
 GROUP_IDS = [int(x) for x in os.environ.get("GROUP_IDS", "").split(",")]
 POST_TEXT = os.environ.get("POST_TEXT")
 INTERVAL = int(os.environ.get("INTERVAL", "180"))
 
-client = TelegramClient("session", API_ID, API_HASH)
+client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
 @client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
 async def forward_to_owner(event):
@@ -40,7 +41,7 @@ async def scheduler():
         await asyncio.sleep(INTERVAL)
 
 async def main():
-    await client.start(phone=PHONE)
+    await client.start()
     logging.info("Bot gestartet!")
     await scheduler()
 
