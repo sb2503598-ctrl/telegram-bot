@@ -16,8 +16,6 @@ INTERVAL = int(os.environ.get("INTERVAL", "180"))
 
 client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
-pending_replies = {}
-
 @client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
 async def forward_to_owner(event):
     sender = await event.get_sender()
@@ -27,21 +25,21 @@ async def forward_to_owner(event):
         f"Name: {sender.first_name} {sender.last_name or ''}\n"
         f"Username: @{sender.username or 'keiner'}\n"
         f"ID: {sender.id}\n\n"
-        f"Nachricht:\n{text}"
+        f"Nachricht:\n{text}\n\n"
+        f"➡️ Antworten: /r {sender.id} Deine Antwort"
     )
-    sent = await client.send_message(OWNER_ID, forward_text)
-    pending_replies[sent.id] = sender.id
-    await event.reply("Deine Nachricht wurde weitergeleitet. ✅")
+    await client.send_message(OWNER_ID, forward_text)
 
-@client.on(events.NewMessage(outgoing=True, func=lambda e: e.is_private))
-async def handle_owner_reply(event):
-    if event.reply_to_msg_id and event.reply_to_msg_id in pending_replies:
-        target_id = pending_replies[event.reply_to_msg_id]
+@client.on(events.NewMessage(incoming=True, pattern=r'^/r (\d+) (.+)$'))
+async def reply_to_user(event):
+    if event.sender_id == OWNER_ID:
+        target_id = int(event.pattern_match.group(1))
+        reply_text = event.pattern_match.group(2)
         try:
-            await client.send_message(target_id, event.text)
-            await event.edit(f"✅ Gesendet!\n\n{event.text}")
+            await client.send_message(target_id, reply_text)
+            await event.respond("✅ Gesendet!")
         except Exception as e:
-            logging.error(f"Fehler beim Antworten: {e}")
+            await event.respond(f"❌ Fehler: {e}")
 
 async def scheduler():
     while True:
