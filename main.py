@@ -25,10 +25,22 @@ async def forward_to_owner(event):
         f"Name: {sender.first_name} {sender.last_name or ''}\n"
         f"Username: @{sender.username or 'keiner'}\n"
         f"ID: {sender.id}\n\n"
-        f"Nachricht:\n{text}"
+        f"Nachricht:\n{text}\n\n"
+        f"➡️ Antworten mit: /r {sender.id} Deine Antwort hier"
     )
     await client.send_message(OWNER_ID, forward_text)
     await event.reply("Deine Nachricht wurde weitergeleitet. ✅")
+
+@client.on(events.NewMessage(outgoing=True, func=lambda e: e.is_private and e.text and e.text.startswith("/r ")))
+async def reply_to_user(event):
+    try:
+        parts = event.text.split(" ", 2)
+        target_id = int(parts[1])
+        reply_text = parts[2]
+        await client.send_message(target_id, reply_text)
+        await event.edit(f"✅ Gesendet an {target_id}:\n{reply_text}")
+    except Exception as e:
+        await event.edit(f"❌ Fehler beim Senden: {e}")
 
 async def scheduler():
     while True:
