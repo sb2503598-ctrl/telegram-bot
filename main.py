@@ -16,31 +16,31 @@ INTERVAL = int(os.environ.get("INTERVAL", "180"))
 
 client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
-@client.on(events.NewMessage)
-async def handle_all(event):
-    logging.info(f"Nachricht empfangen: chat={event.chat_id} sender={event.sender_id} text={event.text}")
-    if event.is_private and event.sender_id != OWNER_ID:
-        sender = await event.get_sender()
-        text = event.message.text or "[Kein Text]"
-        forward_text = (
-            f"📨 Neue Nachricht von:\n"
-            f"Name: {sender.first_name} {sender.last_name or ''}\n"
-            f"Username: @{sender.username or 'keiner'}\n"
-            f"ID: {sender.id}\n\n"
-            f"Nachricht:\n{text}\n\n"
-            f"➡️ Antworten: /r {sender.id} Deine Antwort"
-        )
-        await client.send_message(OWNER_ID, forward_text)
-    elif event.is_private and event.sender_id == OWNER_ID and event.text and event.text.startswith("/r "):
-        parts = event.text.split(" ", 2)
-        if len(parts) == 3:
-            target_id = int(parts[1])
-            reply_text = parts[2]
-            try:
-                await client.send_message(target_id, reply_text)
-                await event.respond("✅ Gesendet!")
-            except Exception as e:
-                await event.respond(f"❌ Fehler: {e}")
+@client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
+async def forward_to_owner(event):
+    sender = await event.get_sender()
+    text = event.message.text or "[Kein Text]"
+    forward_text = (
+        f"📨 Neue Nachricht von:\n"
+        f"Name: {sender.first_name} {sender.last_name or ''}\n"
+        f"Username: @{sender.username or 'keiner'}\n"
+        f"ID: {sender.id}\n\n"
+        f"Nachricht:\n{text}\n\n"
+        f"➡️ Antworten: /r {sender.id} Deine Antwort"
+    )
+    await client.send_message(OWNER_ID, forward_text)
+    await event.reply("Deine Nachricht wurde weitergeleitet. ✅")
+
+@client.on(events.NewMessage(incoming=True, pattern=r'^/r (\d+) (.+)$'))
+async def reply_to_user(event):
+    if event.sender_id == OWNER_ID:
+        target_id = int(event.pattern_match.group(1))
+        reply_text = event.pattern_match.group(2)
+        try:
+            await client.send_message(target_id, reply_text)
+            await event.respond("✅ Gesendet!")
+        except Exception as e:
+            await event.respond(f"❌ Fehler: {e}")
 
 async def scheduler():
     while True:
