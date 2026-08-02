@@ -55,7 +55,8 @@ async def scheduler():
 async def main():
     await client.start()
     logging.info("Bot gestartet!")
-    await scheduler()
+    asyncio.get_event_loop().create_task(scheduler())
+    await client.run_until_disconnected()
 
 with client:
     client.loop.run_until_complete(main())
