@@ -52,11 +52,10 @@ async def scheduler():
                 logging.error(f"Fehler: {e}")
         await asyncio.sleep(INTERVAL)
 
-async def main():
+async def run():
     await client.start()
     logging.info("Bot gestartet!")
-    asyncio.get_event_loop().create_task(scheduler())
+    asyncio.ensure_future(scheduler())
     await client.run_until_disconnected()
 
-with client:
-    client.loop.run_until_complete(main())
+client.loop.run_until_complete(run())
