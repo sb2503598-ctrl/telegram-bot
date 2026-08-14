@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
 SESSION = os.environ.get("SESSION")
-OWNER_ID = int(os.environ.get("OWNER_ID"))
+OWNER_ID = os.environ.get("OWNER_ID")
 GROUP_IDS = [int(x) for x in os.environ.get("GROUP_IDS", "").split(",")]
 POST_TEXT = os.environ.get("POST_TEXT")
 INTERVAL = int(os.environ.get("INTERVAL", "180"))
@@ -33,7 +33,7 @@ async def forward_to_owner(event):
 
 @client.on(events.NewMessage(incoming=True, pattern=r'^/r (\d+) (.+)$'))
 async def reply_to_user(event):
-    if event.sender_id == OWNER_ID:
+    if event.sender_id == int(os.environ.get("OWNER_ID_INT", "0")):
         target_id = int(event.pattern_match.group(1))
         reply_text = event.pattern_match.group(2)
         try:
