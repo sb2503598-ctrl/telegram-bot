@@ -65,4 +65,4 @@ async def run():
     asyncio.ensure_future(scheduler())
     await client.run_until_disconnected()
 
-client.loop.run_until_complete(run())
+asyncio.run(run())
