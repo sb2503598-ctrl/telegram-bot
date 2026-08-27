@@ -44,13 +44,19 @@ async def reply_to_user(event):
             await event.respond(f"❌ Fehler: {e}")
 
 async def scheduler():
+    await asyncio.sleep(30)
+    dialogs = await client.get_dialogs()
+    known_ids = {d.id for d in dialogs}
+    logging.info(f"Bekannte Chats: {len(known_ids)}")
+    
     while True:
         for group_id in GROUP_IDS:
             try:
                 await client.send_message(group_id, POST_TEXT)
                 logging.info(f"Gepostet in {group_id}")
             except Exception as e:
-                logging.error(f"Fehler: {e}")
+                logging.error(f"Fehler in {group_id}: {e}")
+            await asyncio.sleep(2)
         await asyncio.sleep(INTERVAL)
 
 async def run():
